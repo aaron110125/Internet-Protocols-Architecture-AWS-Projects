@@ -1,0 +1,453 @@
+"Parameters": {
+  "myVPC":{
+   "Description": "VPC name is given",
+   "Type": "String"
+  },
+
+  "myPublicSubnet1":{
+   "Description": "PublicSubnet1 name is given",
+   "Type": "String"
+  },
+
+  "myPublicSubnet2":{
+   "Description": "PublicSubnet2 name is given",
+   "Type": "String"
+  },
+
+ "myPrivateSubnet1":{
+   "Description": "PrivateSubnet1 name is given",
+   "Type": "String"
+  },
+
+ "myPrivateSubnet2":{
+   "Description": "PrivateSubnet2 name is given",
+   "Type": "String"
+  },
+
+ "myInternetGateway":{
+   "Description": "InternetGateway name is given",
+   "Type": "String"
+  },
+
+  "myPublicRouteTable":{
+   "Description": "PublicRouteTable name is given",
+   "Type": "String"
+  },
+
+  "myPrivateRouteTable":{
+   "Description": "PrivateRouteTable name is given",
+   "Type": "String"
+  },
+
+  "myNatGateway":{
+   "Description": "NatGateway name is given",
+   "Type": "String"
+  },
+
+  "InstanceType" : {
+      "Description" : "WebServer EC2 instance type",
+      "Type" : "String",
+      "Default" : "t2.micro"
+    },
+
+   "KeyName": {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+       "Default":"aaron",
+      "ConstraintDescription" : "must be the name of an existing EC2 KeyPair."
+    },
+
+}
+
+"Resources": {
+"VPC" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "CidrBlock" : "10.0.0.0/16",
+        "EnableDnsHostnames" : "true",
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Ref":"myVPC"} }
+        ]
+        }
+      },
+"PublicSubnet1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.1.0/24",
+        "AvailabilityZone" : "us-east-1a",
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Ref":"myPublicSubnet1"} }
+        ]
+      }
+    },
+
+"PublicSubnet2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.2.0/24",
+        "AvailabilityZone" : "us-east-1b",
+        "Tags" : [
+
+          {"Key" : "Name", "Value" : {"Ref":"myPublicSubnet2"} }
+        ]
+      }
+    },
+"PrivateSubnet1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.3.0/24",
+        "AvailabilityZone" : "us-east-1c",
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Ref":"myPrivateSubnet1"} }
+        ]
+      }
+    },
+
+"PrivateSubnet2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.4.0/24",
+        "AvailabilityZone" : "us-east-1d",
+        "Tags" : [
+
+          {"Key" : "Name", "Value" : {"Ref":"myPrivateSubnet2"} }
+        ]
+      }
+    },
+
+"InternetGateway" : {
+      "Type" : "AWS::EC2::InternetGateway",
+      "Properties" : {
+        "Tags" : [{"Key" : "Name", "Value" : {"Ref":"myInternetGateway"} } ]
+      }
+    },
+
+"GatewayToInternet" : {
+       "Type" : "AWS::EC2::VPCGatewayAttachment",
+       "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+         "InternetGatewayId" : { "Ref" : "InternetGateway" }
+       }
+    },
+
+ "PublicRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {"Key" : "Name", "Value" :{"Ref":"myPublicRouteTable"}}
+        ]
+      }
+    },
+
+  "PublicRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "DependsOn" : "GatewayToInternet",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PublicRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "GatewayId" : { "Ref" : "InternetGateway" }
+      }
+    },
+
+ "PublicSubnetRouteTableAssociation1" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnet1" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+
+  "PublicSubnetRouteTableAssociation2" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnet2" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+
+  "PrivateRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {"Key" : "Name", "Value" :{"Ref":"myPrivateRouteTable"}}
+        ]
+      }
+    },
+
+  "NatGateway": {
+      "Type": "AWS::EC2::NatGateway",
+      "DependsOn": "EIP",
+      "Properties": {
+        "AllocationId": {"Fn::GetAtt": ["EIP", "AllocationId"]},
+        "SubnetId": {"Ref": "PublicSubnet2"},
+         "Tags" : [
+          {"Key" : "Name", "Value" :{"Ref":"myNatGateway"}}
+        ]
+      }
+    },
+
+  "EIP": {
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+
+ "PrivateRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "DependsOn" : "NatGateway",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PrivateRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NatGateway" }
+      }
+    },
+
+ "PrivateSubnetRouteTableAssociation1" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnet1" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTable" }
+      }
+    },
+
+
+  "PrivateSubnetRouteTableAssociation2" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnet2" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTable" }
+      }
+    },
+
+"SecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "Security Group for Web server",
+        "VpcId" : { "Ref" : "VPC" },
+        "SecurityGroupIngress" : [ { "IpProtocol" : "tcp", "FromPort" : "80",  "ToPort" : "80",  "CidrIp" : "0.0.0.0/0"}, { "IpProtocol" : "icmp", "FromPort" : "8", "ToPort" : "-1", "CidrIp" : "0.0.0.0/0" }, { "IpProtocol" : "tcp", "FromPort" : "3306",  "ToPort" : "3306",  "CidrIp" : "0.0.0.0/0"},{ "IpProtocol" : "tcp", "FromPort" : "22",  "ToPort" : "22",  "CidrIp" : "0.0.0.0/0"},{ "IpProtocol" : "tcp", "FromPort" : "443",  "ToPort" : "443",  "CidrIp" : "0.0.0.0/0"}]
+      }
+    },
+
+
+"DBServer" : {
+  "Type" : "AWS::EC2::Instance",
+  "Properties" : {
+     "ImageId": "ami-07ebfd5b3428b6f4d",
+     "InstanceType":  { "Ref" : "InstanceType" } ,
+    "KeyName" : { "Ref" : "KeyName" },
+
+
+
+     "Tags" : [
+
+          {"Key" : "Name", "Value" : "DBserver" }
+        ],
+     "NetworkInterfaces": [ {
+      "AssociatePublicIpAddress": "false",
+      "DeviceIndex": "0",
+      "GroupSet": [{ "Ref" : "SecurityGroup" }],
+      "SubnetId": { "Ref" : "PrivateSubnet1" }
+    } ],
+
+  "UserData" : {  "Fn::Base64" : { "Fn::Join" : ["", [
+            "#!/bin/bash \n", 
+  
+            "sudo apt update && sudo apt install -y mysql-server \n",
+            "sudo sed -i 's/^bind-address.*/bind-address    =    0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf \n", 
+            "cd ~ \n",
+            "sudo systemctl restart mysql \n",
+            "sudo mysql  <<  RM_Query \n",
+            "create database sqlaaron; \n",
+            "use sqlaaron; \n",
+            "CREATE TABLE EMPLOYEES( \n",
+            "ID int(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,\n",
+            "NAME VARCHAR(45),\n",
+            "ADDRESS VARCHAR(90));\n",
+            "insert into EMPLOYEES value(500,\"Delroz Elizabeth\",\"Boylston street\");\n",
+            "CREATE USER 'aarondcosta'@'%' IDENTIFIED BY 'F1lower!'; \n",
+            "GRANT ALL ON *.* TO 'aarondcosta'@'%' IDENTIFIED BY 'F1lower!' WITH GRANT OPTION; \n",
+            "FLUSH PRIVILEGES; \n",
+            "RM_Query \n"
+            
+]]}
+}
+}
+},
+
+
+"WebServer" : {
+  "Type" : "AWS::EC2::Instance",
+  "Properties" : {
+     "ImageId": "ami-07ebfd5b3428b6f4d",
+     "InstanceType":  { "Ref" : "InstanceType" } ,
+    "KeyName" : { "Ref" : "KeyName" },
+
+
+
+     "Tags" : [
+
+          {"Key" : "Name", "Value" : "Webserver" }
+        ],
+     "NetworkInterfaces": [ {
+      "AssociatePublicIpAddress": "true",
+      "DeviceIndex": "0",
+      "GroupSet": [{ "Ref" : "SecurityGroup" }],
+      "SubnetId": { "Ref" : "PublicSubnet2" }
+    } ],
+
+  "UserData" : {  "Fn::Base64" : { "Fn::Join" : ["", [
+           "#!/bin/bash \n",
+
+            "sudo apt update && sudo apt install -y apache2 \n", 
+            "sudo apt update && sudo apt install -y php libapache2-mod-php php-mysql \n",
+            "cd /var/www\n",
+            "sudo mkdir inc\n",
+            "cd inc\n",
+            "cat > dbinfo.inc << mafia\n",
+            "<?php\n",
+            "\n",
+            "define('DB_SERVER', '",{"Fn::GetAtt":["DBServer","PrivateIp"]},"');\n",
+            "define('DB_USERNAME', 'aarondcosta');\n",
+            "define('DB_PASSWORD', 'F1lower!');\n",
+            "define('DB_DATABASE', 'sqlaaron');\n",
+            "\n",
+            "?> \n",
+            "mafia\n",
+            "cd ..\n",
+            "cd html\n",
+            "sudo rm index.html \n",
+            "cat > index.php << Rhea\n",
+"<?php include \"../inc/dbinfo.inc\"; ?> \n",
+"<html> \n",
+"<body> \n",
+"<h1>Employee details</h1> \n",
+"<?php \n",
+" \n",
+"  /* Connect to MySQL and select the database. */ \n",
+"  \\$connection = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD); \n",
+" \n",
+"  if (mysqli_connect_errno()) echo \"Failed to connect to MySQL: \" . mysqli_connect_error(); \n",
+" \n",
+"  \\$database = mysqli_select_db(\\$connection, DB_DATABASE); \n",
+" \n",
+"  /* Ensure that the EMPLOYEES table exists. */ \n",
+"  VerifyEmployeesTable(\\$connection, DB_DATABASE); \n",
+"  \n",
+"  /* If input fields are populated, add a row to the EMPLOYEES table. */  \n",
+"  \\$employee_name = htmlentities(\\$_POST['NAME']);  \n",
+"  \\$employee_address = htmlentities(\\$_POST['ADDRESS']);  \n",
+"  \n",
+"  if (strlen(\\$employee_name) || strlen(\\$employee_address)) {  \n",
+"    AddEmployee(\\$connection, \\$employee_name, \\$employee_address);  \n",
+"  }  \n",
+"?>  \n",
+"  \n",
+"<!-- Input form -->  \n",
+"<form action=\"<?PHP echo \\$_SERVER['SCRIPT_NAME'] ?>\" method=\"POST\">  \n",
+"  <table border=\"0\">  \n",
+"    <tr>  \n",
+"      <td>NAME</td>  \n",
+"      <td>ADDRESS</td>  \n",
+"    </tr>  \n",
+"    <tr>  \n",
+"      <td>  \n",
+"        <input type=\"text\" name=\"NAME\" maxlength=\"45\" size=\"30\" />  \n",
+"      </td>  \n",
+"      <td>  \n",
+"        <input type=\"text\" name=\"ADDRESS\" maxlength=\"90\" size=\"60\" />  \n",
+"      </td>  \n",
+"      <td>  \n",
+"        <input type=\"submit\" value=\"Add Data\" />  \n",
+"      </td>  \n",
+"    </tr>  \n",
+"  </table>  \n",
+"</form>  \n",
+"  \n",
+"<!-- Display table data. -->  \n",
+"<table border=\"1\" cellpadding=\"2\" cellspacing=\"2\">  \n",
+"  <tr>  \n",
+"    <td>ID</td>  \n",
+"    <td>NAME</td>  \n",
+"    <td>ADDRESS</td>  \n",
+"  </tr>  \n",
+"  \n",
+"<?php  \n",
+"  \n",
+"\\$result = mysqli_query(\\$connection, \"SELECT * FROM EMPLOYEES\");  \n",
+"  \n",
+"while(\\$query_data = mysqli_fetch_row(\\$result)) {  \n",
+"  echo \"<tr>\";  \n",
+"  echo \"<td>\",\\$query_data[0], \"</td>\",  \n",
+"       \"<td>\",\\$query_data[1], \"</td>\",  \n",
+"       \"<td>\",\\$query_data[2], \"</td>\";  \n",
+"  echo \"</tr>\";  \n",
+"}  \n",
+"?>  \n",
+"  \n",
+"</table>  \n",
+"  \n",
+"<!-- Clean up. -->  \n",
+"<?php  \n",
+"  \n",
+"  mysqli_free_result(\\$result);  \n",
+"  mysqli_close(\\$connection);  \n",
+"  \n",
+"?>  \n",
+"  \n",
+"</body>  \n",
+"</html>  \n",
+"  \n",
+"  \n",
+"<?php  \n",
+"  \n",
+"/* Add an employee to the table. */  \n",
+"function AddEmployee(\\$connection, \\$name, \\$address) {  \n",
+"   \\$n = mysqli_real_escape_string(\\$connection, \\$name);  \n",
+"   \\$a = mysqli_real_escape_string(\\$connection, \\$address);  \n",
+"  \n",
+"   \\$query = \"INSERT INTO EMPLOYEES (NAME, ADDRESS) VALUES ('\\$n', '\\$a');\";  \n",
+"  \n",
+"   if(!mysqli_query(\\$connection, \\$query)) echo(\"<p>Error adding employee data.</p>\");  \n",
+"}  \n",
+"  \n",
+"/* Check whether the table exists and, if not, create it. */  \n",
+"function VerifyEmployeesTable(\\$connection, \\$dbName) {  \n",
+"  if(!TableExists(\"EMPLOYEES\", \\$connection, \\$dbName))  \n",
+"  {  \n",
+"     \\$query = \"CREATE TABLE EMPLOYEES (  \n",
+"         ID int(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,  \n",
+"         NAME VARCHAR(45),  \n",
+"         ADDRESS VARCHAR(90)  \n",
+"       )\";  \n",
+"  \n",
+"     if(!mysqli_query(\\$connection, \\$query)) echo(\"<p>Error creating table.</p>\");  \n",
+"  }  \n",
+"}  \n",
+"  \n",
+"/* Check for the existence of a table. */  \n",
+"function TableExists(\\$tableName, \\$connection, \\$dbName) {  \n",
+"  \\$t = mysqli_real_escape_string(\\$connection, \\$tableName);  \n",
+"  \\$d = mysqli_real_escape_string(\\$connection, \\$dbName);  \n",
+"  \n",
+"  \\$checktable = mysqli_query(\\$connection,  \n",
+"      \"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_NAME = '\\$t' AND TABLE_SCHEMA = '\\$d'\");  \n",
+"  \n",
+"  if(mysqli_num_rows(\\$checktable) > 0) return true;  \n",
+"  \n",
+"  return false;  \n",
+"}  \n",
+"?>  \n",
+"Rhea\n"
+ ]]}
+}
+}
+},
+}
+
