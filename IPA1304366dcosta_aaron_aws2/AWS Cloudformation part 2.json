@@ -271,8 +271,8 @@
             "NAME VARCHAR(45),\n",
             "ADDRESS VARCHAR(90));\n",
             "insert into EMPLOYEES value(500,\"Delroz Elizabeth\",\"Boylston street\");\n",
-            "CREATE USER 'aarondcosta'@'%' IDENTIFIED BY 'F1lower!'; \n",
-            "GRANT ALL ON *.* TO 'aarondcosta'@'%' IDENTIFIED BY 'F1lower!' WITH GRANT OPTION; \n",
+            "CREATE USER 'aarondcosta'@'%' IDENTIFIED BY 'Rubyda123!'; \n",
+            "GRANT ALL ON *.* TO 'aarondcosta'@'%' IDENTIFIED BY 'Rubyda123!' WITH GRANT OPTION; \n",
             "FLUSH PRIVILEGES; \n",
             "RM_Query \n"
             
@@ -315,7 +315,7 @@
             "\n",
             "define('DB_SERVER', '",{"Fn::GetAtt":["DBServer","PrivateIp"]},"');\n",
             "define('DB_USERNAME', 'aarondcosta');\n",
-            "define('DB_PASSWORD', 'F1lower!');\n",
+            "define('DB_PASSWORD', 'Rubyda123!');\n",
             "define('DB_DATABASE', 'sqlaaron');\n",
             "\n",
             "?> \n",
